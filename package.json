@@ -1,0 +1,16 @@
+{
+  "name": "notifications",
+  "version": "1.0.0",
+  "description": "notifications listener ",
+  "main": "notifications.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "John Llombart",
+  "license": "ISC",
+  "dependencies": {
+    "amqplib": "^0.3.2",
+    "mongodb": "^2.0.31",
+    "nodemailer": "^1.3.4"
+  }
+}
