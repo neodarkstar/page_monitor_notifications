@@ -73,7 +73,7 @@ function notify(db, site){
 
 		console.log('Notified : ' + user.name + ' ' + user.text);
 
-		transporter.sendMail(mailOptions);
+		//transporter.sendMail(mailOptions);
 
 		});
 
