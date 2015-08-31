@@ -1,51 +1,41 @@
 var nodemailer = require('nodemailer');
 var MongoClient = require('mongodb').MongoClient;
-var amqp = require('amqplib');
+var amqp = require('amqplib/callback_api');
 
 var url = 'mongodb://localhost:27017/page_monitor';
-
 
 subscribe();
 
 function subscribe(){
 
-  MongoClient.connect(url, function(err, db){
-    process.once('SIGINT', function(){ db.close();});
+  amqp.connect('amqp://localhost', function(err, conn) {
+    conn.createChannel(function(err, ch) {
+      var ex = 'notifications';
 
-    amqp.connect('amqp://localhost').then(function(conn){
-      process.once('SIGINT', function(){ conn.close();});
+      ch.assertExchange(ex, 'fanout', {durable: false});
 
-      return conn.createChannel().then(function(ch){
+      ch.assertQueue('', {exclusive: true}, function(err, q) {
+        console.log(" [*] Waiting for messages in %s. To exit press CTRL+C", q.queue);
+        ch.bindQueue(q.queue, ex, '');
 
-        var ok = ch.assertQueue('email', { durable: false });
-
-        ok = ok.then(function(_qok){
-          return ch.consume('email', function(msg){
-
-            var item = JSON.parse(msg.content.toString());
-
-            console.log(" [x] Received '%s'", 'Item: ' + item.item + ' Store: ' + item.store);
-
-            notify(db,item);
-
-          }, {noAck: true});
-        });
-
-        return ok.then(function(_consumeOk){
-          console.log(' [*] Waiting for messages. To exit press CTRL+C');
-        });
+        ch.consume(q.queue, function(msg) {
+          console.log(" [x] %s", msg.content.toString());
+          notify(msg);
+        }, {noAck: true});
       });
-    }).then(null, console.warn);
-
+    });
   });
+
 
 }
 
-function notify(db, site){
+function notify(item){
+
+  var site = JSON.parse(item.content.toString());
 
 	var msg = {
-		subject: site.item + ' has Changed!\n',
-		body: site.url
+		subject: item.name + ' has Changed!\n',
+		body: item.url
 	};
 
 	var transporter = nodemailer.createTransport({
@@ -56,27 +46,36 @@ function notify(db, site){
 		}
 	});
 
-	site.notify.forEach(function(username){
+  MongoClient.connect(url, function(err, db){
+    process.once('SIGINT', function(){ db.close();});
 
-		db.collection('users').find({ name: username }).limit(1).each(function(err, user){
+  	site.notify.forEach(function(username){
 
-			if(user === null) return;
+  		db.collection('users').find({ name: username }).limit(1).each(function(err, user){
 
-			var mailOptions = {
+  			if(user === null) return;
 
-				from: 'amiibo.monitor@gmail.com',
-				to: user.text,
-				subject: msg.subject,
-				text: msg.body
+  			var mailOptions = {
 
-			};
+  				from: 'amiibo.monitor@gmail.com',
+  				to: user.text,
+  				subject: msg.subject,
+  				text: msg.body
 
-		console.log('Notified : ' + user.name + ' ' + user.text);
+  			};
 
-		//transporter.sendMail(mailOptions);
+  		console.log('Notified : ' + user.name + ' ' + user.text);
 
-		});
+      transporter.sendMail(mailOptions, function(error, info){
+        if(error){
+            return console.log(error);
+        }
+        console.log('Message sent: ' + info.response);
+      });
 
-	});
+  		});
 
+  	});
+
+  });
 }
