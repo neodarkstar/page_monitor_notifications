@@ -20,7 +20,7 @@ function subscribe(){
 
         ch.consume(q.queue, function(msg) {
           console.log(" [x] %s", msg.content.toString());
-          notify(msg);
+          notify(msg.content.toString());
         }, {noAck: true});
       });
     });
@@ -30,8 +30,6 @@ function subscribe(){
 }
 
 function notify(item){
-
-  var site = JSON.parse(item.content.toString());
 
 	var msg = {
 		subject: item.name + ' has Changed!\n',
