@@ -20,7 +20,7 @@ function subscribe(){
 
         ch.consume(q.queue, function(msg) {
           console.log(" [x] %s", msg.content.toString());
-          notify(msg.content.toString());
+          notify(JSON.parse(msg.content.toString()));
         }, {noAck: true});
       });
     });
@@ -44,10 +44,12 @@ function notify(item){
 		}
 	});
 
+  console.log(item.name);
+
   MongoClient.connect(url, function(err, db){
     process.once('SIGINT', function(){ db.close();});
 
-  	site.notify.forEach(function(username){
+  	item.notify.forEach(function(username){
 
   		db.collection('users').find({ name: username }).limit(1).each(function(err, user){
 
