@@ -12,11 +12,11 @@ function subscribe(){
     conn.createChannel(function(err, ch) {
       var ex = 'notifications';
 
-      ch.assertExchange(ex, 'fanout', {durable: false});
+      ch.assertExchange(ex, 'topic', {durable: false});
 
       ch.assertQueue('', {exclusive: true}, function(err, q) {
         console.log(" [*] Waiting for messages in %s. To exit press CTRL+C", q.queue);
-        ch.bindQueue(q.queue, ex, '');
+        ch.bindQueue(q.queue, ex, 'notifications.available');
 
         ch.consume(q.queue, function(msg) {
           console.log(" [x] %s", msg.content.toString());
