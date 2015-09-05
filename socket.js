@@ -14,8 +14,6 @@ app.get('/', function(req, res){
 io.on('connection', function(socket){
   console.log('a user conneected');
 
-
-
 });
 
 http.listen(9137, function(){
@@ -40,10 +38,11 @@ function subscribe(io){
 
         ch.consume(q.queue, function(msg) {
           var item = JSON.parse(msg.content.toString());
+          item['time'] = moment().format();
 
           io.emit('check', item);
 
-          console.log(" [x] %s:'%s'", msg.fields.routingKey, msg.content.toString());
+          console.log(" [x] %s:'%s'", msg.fields.routingKey, JSON.stringify(item));
         }, {noAck: true});
       });
     });
