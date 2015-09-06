@@ -38,7 +38,6 @@ function subscribe(io){
 
         ch.consume(q.queue, function(msg) {
           var item = JSON.parse(msg.content.toString());
-          item['time'] = moment().format();
 
           io.emit('check', item);
 

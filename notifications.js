@@ -1,6 +1,7 @@
 var nodemailer = require('nodemailer');
 var MongoClient = require('mongodb').MongoClient;
 var amqp = require('amqplib/callback_api');
+var _ = require('lodash');
 
 var url = 'mongodb://localhost:27017/page_monitor';
 
@@ -33,7 +34,7 @@ function notify(item){
 
 	var msg = {
 		subject: item.name + ' has Changed!\n',
-		body: item.url
+		body: item.stores[0].url
 	};
 
 	var transporter = nodemailer.createTransport({
@@ -44,12 +45,10 @@ function notify(item){
 		}
 	});
 
-  console.log(item.name);
-
   MongoClient.connect(url, function(err, db){
     process.once('SIGINT', function(){ db.close();});
 
-  	item.notify.forEach(function(username){
+  	item.stores[0].users.forEach(function(username){
 
   		db.collection('users').find({ name: username }).limit(1).each(function(err, user){
 
